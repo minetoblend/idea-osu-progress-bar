@@ -24,6 +24,9 @@ Features:
 - **skinning support**: just point it at a skin directory in your osu! stable installation 
 <!-- Plugin description end -->
 
+## Credits & Attribution
+The icons in `src/main/resources/icons` are taken from [osu-resources](https://github.com/ppy/osu-resources) and are licensed under [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/).
+
 ## Installation
 
 - Using the IDE built-in plugin system:
