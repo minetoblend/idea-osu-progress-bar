@@ -4,4 +4,4 @@
 
 ## [Unreleased]
 ### Added
-- Initial scaffold created from [IntelliJ Platform Plugin Template](https://github.com/JetBrains/intellij-platform-plugin-template)
+- osu! style progress bars with support for custom skins and combo colors.
