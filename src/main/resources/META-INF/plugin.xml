@@ -11,7 +11,7 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <!--suppress PluginXmlCapitalization, PluginXmlI18n -->
-        <applicationConfigurable parentId="tools"
+        <applicationConfigurable parentId="appearance"
                                  instance="com.github.minetoblend.osuprogressbar.settings.OsuProgressBarConfigurable"
                                  id="com.github.minetoblend.osuprogressbar.settings.OsuProgressBarConfigurable"
                                  displayName="osu! Progress Bar" />
