@@ -1,15 +1,18 @@
-package com.github.minetoblend.osuprogressbar.settings
+package com.github.minetoblend.osuprogressbar.skinning
 
+import com.github.minetoblend.osuprogressbar.settings.OsuProgressBarSettings
+import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO
 
 object SkinSource {
     private val defaultSkin = Skin(
-        config = SkinConfig()
-    ) {
-        javaClass.getResource("/icons/$it.png")?.let(ImageIO::read)
-
-    }
+        config = SkinConfig(),
+        textures = object : TextureStore() {
+            override fun load(name: String): BufferedImage? =
+                runCatching { javaClass.getResource("/icons/$name.png")?.let(ImageIO::read) }.getOrNull()
+        }
+    )
 
     private var _customSkin: Skin? = null
     private var _skinPath: String? = null
@@ -25,15 +28,18 @@ object SkinSource {
                     File(skinPath).takeIf { it.exists() && it.isDirectory }
                         ?.let { directory ->
                             Skin(
-                                config = SkinConfig.fromFile(directory.resolve("skin.ini"))
-                            ) { lookup ->
-                                runCatching {
-                                    val file = directory.resolve("$lookup.png").takeIf { it.exists() }
-                                        ?: directory.resolve("$lookup@2x.png").takeIf { it.exists() }
+                                config = SkinConfig.fromFile(directory.resolve("skin.ini")),
+                                textures = object : TextureStore() {
+                                    override fun load(name: String): BufferedImage? {
+                                        return runCatching {
+                                            val file = directory.resolve("$name.png").takeIf { it.exists() }
 
-                                    file?.let(ImageIO::read)
-                                }.getOrNull()
-                            }
+                                            file?.let(ImageIO::read)
+                                        }.getOrNull()
+                                    }
+
+                                }
+                            )
                         }
                 }.getOrNull()
             }

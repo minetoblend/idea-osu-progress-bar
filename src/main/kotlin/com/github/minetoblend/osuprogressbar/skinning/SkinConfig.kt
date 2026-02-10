@@ -1,4 +1,4 @@
-package com.github.minetoblend.osuprogressbar.settings
+package com.github.minetoblend.osuprogressbar.skinning
 
 import java.awt.Color
 import java.io.File

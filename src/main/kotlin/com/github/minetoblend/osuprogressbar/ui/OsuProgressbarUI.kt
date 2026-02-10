@@ -1,10 +1,11 @@
+@file:Suppress("UseJBColor")
+
 package com.github.minetoblend.osuprogressbar.ui
 
 import com.github.minetoblend.osuprogressbar.settings.OsuProgressBarSettings
-import com.github.minetoblend.osuprogressbar.settings.Skin
-import com.github.minetoblend.osuprogressbar.settings.SkinSource
-import com.github.minetoblend.osuprogressbar.utils.withTint
-import com.intellij.util.ui.GraphicsUtil
+import com.github.minetoblend.osuprogressbar.skinning.Skin
+import com.github.minetoblend.osuprogressbar.skinning.SkinSource
+import com.github.minetoblend.osuprogressbar.skinning.Texture
 import com.intellij.util.ui.JBUI
 import java.awt.*
 import java.awt.event.ComponentAdapter
@@ -55,129 +56,194 @@ class OsuProgressbarUI : BasicProgressBarUI() {
             return super.paintIndeterminate(g, c)
 
         val settings = OsuProgressBarSettings.getInstance()
-
-        val config = GraphicsUtil.setupAAPainting(g)
-        val insets = progressBar.insets
         val width = progressBar.width
         val height = progressBar.preferredSize.height - 2
 
-        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC)
+        draw(g, c) {
+            val drawScale = height / 128f
 
-        g.drawSliderBody(
-            SkinSource.get { this.config }.sliderTrackOverride ?: settings.comboColor,
-            0,
-            (c.height - height) / 2,
-            width,
-            height
-        )
+            boxRect = getBox(boxRect)
 
+            val middleFrame = frameCount / 2
 
-        val scale = height / 128f
+            val isReverse = animationIndex >= middleFrame
 
-        boxRect = getBox(boxRect)
+            val sliderb = SkinSource.get { sliderb }
 
-        val middleFrame = frameCount / 2
+            var sliderBIndex = animationIndex % sliderb.size
+            if (isReverse)
+                sliderBIndex = sliderb.lastIndex - sliderBIndex
 
-        val isReverse = animationIndex >= middleFrame
+            var spanProgress = animationIndex.toFloat() / frameCount * 2f
+            if (isReverse)
+                spanProgress -= 1
 
-        val sliderb = SkinSource.get { sliderb }
+            val centerY = c.height / 2
 
-        var sliderBIndex = animationIndex % sliderb.size
-        if (isReverse)
-            sliderBIndex = sliderb.lastIndex - sliderBIndex
+            sliderBody(
+                accentColor = SkinSource.get { config }.sliderTrackOverride ?: settings.comboColor,
+                x = 0,
+                y = (c.height - height) / 2,
+                width = width,
+                height = height,
+            )
 
-        var spanProgress = animationIndex.toFloat() / frameCount * 2f
-        if (isReverse)
-            spanProgress -= 1
+            hitCircle(
+                reverseArrow = SkinSource.get { reverseArrow },
+                x = height / 2,
+                y = centerY,
+                scale = drawScale,
+                spanProgress = spanProgress.takeIf { !isReverse },
+                arrowDirection = ArrowDirection.Right,
+            )
+
+            hitCircle(
+                getCircleTexture = { sliderEndCircle },
+                getOverlayTexture = { sliderEndCircleOverlay },
+                reverseArrow = SkinSource.get { reverseArrow },
+                x = width - height / 2,
+                y = centerY,
+                scale = drawScale,
+                spanProgress = spanProgress.takeIf { isReverse },
+                arrowDirection = ArrowDirection.Left,
+            )
+
+            sprite(SkinSource.getProvider { it.sliderb != null }?.sliderbND) {
+                tint = Color(5, 5, 5, 255)
+                scale = drawScale
+                x = boxRect.centerX.toInt()
+                y = boxRect.centerY.toInt()
+            }
+
+            sprite(sliderb[sliderBIndex]) {
+                tint = when {
+                    SkinSource.get { config }.allowSliderBallTint -> settings.comboColor
+                    else -> null
+                }
+                scale = drawScale
+                x = boxRect.centerX.toInt()
+                y = boxRect.centerY.toInt()
+            }
+
+            sprite(SkinSource.get { sliderFollowCircle }) {
+                scale = drawScale
+                x = boxRect.centerX.toInt()
+                y = boxRect.centerY.toInt()
+            }
+        }
+    }
+
+    override fun paintDeterminate(g: Graphics, c: JComponent) {
+        if (g !is Graphics2D)
+            return
+
+        if (progressBar.orientation != SwingConstants.HORIZONTAL || !c.componentOrientation.isLeftToRight)
+            return super.paintDeterminate(g, c)
+
+        val settings = OsuProgressBarSettings.getInstance()
+
+        val width = progressBar.width
+        val height = progressBar.preferredSize.height - 2
 
         val centerY = c.height / 2
 
-        g.drawHitCircle(
-            reverseArrow = SkinSource.get { reverseArrow },
-            x = height / 2,
-            y = centerY,
-            scale = scale,
-            spanProgress = spanProgress.takeIf { !isReverse },
-            observer = c,
-            arrowDirection = ArrowDirection.Right,
-        )
-        g.drawHitCircle(
-            getCircleSprite = { sliderEndCircle },
-            getOverlaySprite = { sliderEndCircleOverlay },
-            reverseArrow = SkinSource.get { reverseArrow },
-            x = width - height / 2,
-            y = centerY,
-            scale = scale,
-            spanProgress = spanProgress.takeIf { isReverse },
-            observer = c,
-            arrowDirection = ArrowDirection.Left,
-        )
+        val amountFull = ((width - height) * progressBar.percentComplete).toInt()
 
-        SkinSource.getProvider { it.sliderb != null }!!.let { skin ->
-            skin.sliderbND?.let { image ->
-                g.drawImageWithScale(
-                    image,
-                    scale,
-                    boxRect.centerX.toInt(),
-                    boxRect.centerY.toInt(),
-                    c
-                )
+        draw(g, c) {
+            sliderBody(
+                accentColor = SkinSource.get { config }.sliderTrackOverride ?: settings.comboColor,
+                x = 0,
+                y = (c.height - height) / 2,
+                width = width,
+                height = height
+            )
+
+            val drawScale = height / 128f
+
+            hitCircle(
+                reverseArrow = null,
+                x = height / 2 + amountFull,
+                y = centerY,
+                scale = drawScale,
+                spanProgress = null,
+                arrowDirection = ArrowDirection.Right,
+            )
+            hitCircle(
+                getCircleTexture = { sliderEndCircle },
+                getOverlayTexture = { sliderEndCircleOverlay },
+                reverseArrow = null,
+                x = width - height / 2,
+                y = centerY,
+                scale = drawScale,
+                spanProgress = null,
+                arrowDirection = ArrowDirection.Left,
+            )
+
+            val sliderb = SkinSource.get { sliderb }
+
+            val sliderBIndex = (amountFull / 4) % sliderb.size
+
+
+            sprite(SkinSource.getProvider { it.sliderb != null }?.sliderbND) {
+                tint = Color(5, 5, 5, 255)
+                scale = drawScale
+                x = amountFull + height / 2
+                y = centerY
+            }
+
+            sprite(sliderb[sliderBIndex]) {
+                tint = Color(5, 5, 5, 255)
+                scale = drawScale
+                x = amountFull + height / 2
+                y = centerY
+            }
+
+            sprite(SkinSource.get { sliderFollowCircle }) {
+                scale = drawScale
+                x = amountFull + height / 2
+                y = centerY
             }
         }
-
-        g.drawImageWithScale(
-            if (SkinSource.get { this.config }.allowSliderBallTint)
-                sliderb[sliderBIndex].withTint(settings.comboColor)
-            else
-                sliderb[sliderBIndex],
-            scale,
-            boxRect.centerX.toInt(),
-            boxRect.centerY.toInt(),
-            c
-        )
-
-        g.drawImageWithScale(
-            SkinSource.get { sliderFollowCircle },
-            scale,
-            boxRect.centerX.toInt(),
-            boxRect.centerY.toInt(),
-            c
-        )
-
-        config.restore()
     }
 
-    private fun Graphics2D.drawHitCircle(
-        getCircleSprite: Skin.() -> BufferedImage? = { hitCircle },
-        getOverlaySprite: Skin.() -> BufferedImage? = { hitCircleOverlay },
-        reverseArrow: BufferedImage?,
+    private fun DrawScope.hitCircle(
+        getCircleTexture: Skin.() -> Texture? = { hitCircle },
+        getOverlayTexture: Skin.() -> Texture? = { hitCircleOverlay },
+        reverseArrow: Texture? = null,
         x: Int,
         y: Int,
         scale: Float,
         spanProgress: Float?,
-        observer: ImageObserver,
         arrowDirection: ArrowDirection = ArrowDirection.Left
     ) {
-        val provider = SkinSource.getProvider { getCircleSprite(it) != null }
+        val provider = SkinSource.getProvider { getCircleTexture(it) != null }
             ?: SkinSource.getProvider { it.hitCircle != null }!!
 
         var hasCircleSprite = true
 
-        val circleSprite = (provider.getCircleSprite() ?: SkinSource.get { hitCircle }.also { hasCircleSprite = false })
-            .withTint(OsuProgressBarSettings.getInstance().comboColor)
+        val circleTexture =
+            (provider.getCircleTexture() ?: SkinSource.get { hitCircle }.also { hasCircleSprite = false })
 
-        val overlaySprite = if (hasCircleSprite) provider.getOverlaySprite() else SkinSource.get { hitCircleOverlay }
+        val overlayTexture = if (hasCircleSprite) provider.getOverlayTexture() else SkinSource.get { hitCircleOverlay }
 
-        drawImageWithScale(circleSprite, scale, x, y, observer)
-        if (overlaySprite != null)
-            drawImageWithScale(overlaySprite, scale, x, y, observer)
+        sprite(circleTexture) {
+            this.scale = scale
+            this.x = x
+            this.y = y
+            tint = OsuProgressBarSettings.getInstance().comboColor
+        }
 
+        sprite(overlayTexture) {
+            this.scale = scale
+            this.x = x
+            this.y = y
+        }
 
-        if (reverseArrow != null) {
-            when (arrowDirection) {
-                ArrowDirection.Left -> drawImageWithScale(reverseArrow, scale, x, y, observer, flipX = true)
-                ArrowDirection.Right -> drawImageWithScale(reverseArrow, scale, x, y, observer)
-            }
+        sprite(reverseArrow) {
+            this.scale = scale
+            this.x = x
+            this.y = y
+            flipX = arrowDirection == ArrowDirection.Left
         }
 
         if (spanProgress == null)
@@ -192,130 +258,40 @@ class OsuProgressbarUI : BasicProgressBarUI() {
         val circleScale = scale * 1f.lerp(1.4f, easeOut(progress))
 
         withComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha)) {
-            drawImageWithScale(circleSprite, circleScale, x, y, observer)
-            if (overlaySprite != null)
-                drawImageWithScale(overlaySprite, circleScale, x, y, observer)
+            sprite(circleTexture) {
+                this.scale = circleScale
+                this.x = x
+                this.y = y
+            }
 
-            if (reverseArrow != null) {
-                when (arrowDirection) {
-                    ArrowDirection.Left -> drawImageWithScale(reverseArrow, circleScale, x, y, observer, flipX = true)
-                    ArrowDirection.Right -> drawImageWithScale(reverseArrow, circleScale, x, y, observer)
-                }
+            sprite(overlayTexture) {
+                this.scale = circleScale
+                this.x = x
+                this.y = y
+            }
+
+            sprite(reverseArrow) {
+                this.scale = circleScale
+                this.x = x
+                this.y = y
+                flipX = arrowDirection == ArrowDirection.Left
             }
         }
     }
 
-    private inline fun Graphics2D.withComposite(composite: Composite, block: () -> Unit) {
-        val oldComposite = this.composite
+    private inline fun DrawScope.withComposite(composite: Composite, block: () -> Unit) {
+        val oldComposite = graphics.composite
 
         try {
-            this.composite = composite
+            graphics.composite = composite
             block()
         } finally {
-            this.composite = oldComposite
+            graphics.composite = oldComposite
         }
     }
 
-    private fun Graphics2D.drawImageWithScale(
-        image: BufferedImage,
-        scale: Float,
-        centerX: Int,
-        centerY: Int,
-        observer: ImageObserver,
-        flipX: Boolean = false
-    ) {
-        val width = (image.width * scale).roundToInt() * if (flipX) -1 else 1
-        val height = (image.width * scale).roundToInt()
 
-        drawImage(
-            image,
-            centerX - width / 2,
-            centerY - height / 2,
-            width,
-            height,
-            observer,
-        )
-    }
-
-    override fun paintDeterminate(g: Graphics, c: JComponent) {
-        if (g !is Graphics2D)
-            return
-
-        if (progressBar.orientation != SwingConstants.HORIZONTAL || !c.componentOrientation.isLeftToRight)
-            return super.paintDeterminate(g, c)
-
-        val settings = OsuProgressBarSettings.getInstance()
-
-        val graphicsConfig = GraphicsUtil.setupAAPainting(g)
-        val width = progressBar.width
-        val height = progressBar.preferredSize.height - 2
-
-        val centerY = c.height / 2
-
-        val amountFull = ((width - height) * progressBar.percentComplete).toInt()
-
-        g.drawSliderBody(
-            SkinSource.get { config }.sliderTrackOverride ?: settings.comboColor,
-            0,
-            (c.height - height) / 2,
-            width,
-            height
-        )
-
-        val scale = height / 128f
-
-        g.drawHitCircle(
-            reverseArrow = null,
-            x = height / 2 + amountFull,
-            y = centerY,
-            scale = scale,
-            spanProgress = null,
-            observer = c,
-            arrowDirection = ArrowDirection.Right,
-        )
-        g.drawHitCircle(
-            getCircleSprite = { sliderEndCircle },
-            getOverlaySprite = { sliderEndCircleOverlay },
-            reverseArrow = null,
-            x = width - height / 2,
-            y = centerY,
-            scale = scale,
-            spanProgress = null,
-            observer = c,
-            arrowDirection = ArrowDirection.Left,
-        )
-
-        val sliderb = SkinSource.get { sliderb }
-
-        val sliderBIndex = (amountFull / 4) % sliderb.size
-
-
-        SkinSource.getProvider { it.sliderb != null }!!.let { skin ->
-            skin.sliderbND?.let { image ->
-                g.drawImageWithScale(
-                    image,
-                    scale,
-                    amountFull + height / 2,
-                    centerY,
-                    c
-                )
-            }
-        }
-
-        g.drawImageWithScale(sliderb[sliderBIndex], scale, amountFull + height / 2, centerY, c)
-
-        g.drawImageWithScale(
-            SkinSource.get { sliderFollowCircle },
-            scale,
-            amountFull + height / 2,
-            centerY,
-            c
-        )
-
-        graphicsConfig.restore()
-    }
-
-    private fun Graphics2D.drawSliderBody(
+    private fun DrawScope.sliderBody(
         accentColor: Color,
         x: Int,
         y: Int,
@@ -324,7 +300,7 @@ class OsuProgressbarUI : BasicProgressBarUI() {
     ) {
         val (positions, colors) = sliderBodyGradientStops(accentColor)
 
-        paint = LinearGradientPaint(
+        graphics.paint = LinearGradientPaint(
             0f,
             y.toFloat(),
             0f,
@@ -333,9 +309,9 @@ class OsuProgressbarUI : BasicProgressBarUI() {
             colors,
         )
 
-        fillRect(x + height / 2, y, width - height, height)
+        graphics.fillRect(x + height / 2, y, width - height, height)
 
-        paint = RadialGradientPaint(
+        graphics.paint = RadialGradientPaint(
             Point2D.Float(
                 x + height / 2f,
                 y + height / 2f
@@ -345,9 +321,9 @@ class OsuProgressbarUI : BasicProgressBarUI() {
             colors.take(6).reversed().toTypedArray(),
         )
 
-        fillRect(x, y, height / 2, height)
+        graphics.fillRect(x, y, height / 2, height)
 
-        paint = RadialGradientPaint(
+        graphics.paint = RadialGradientPaint(
             Point2D.Float(
                 x + width - height / 2f,
                 y + height / 2f
@@ -357,7 +333,7 @@ class OsuProgressbarUI : BasicProgressBarUI() {
             colors.take(6).reversed().toTypedArray(),
         )
 
-        fillRect(x + width - height / 2, y, height / 2, height)
+        graphics.fillRect(x + width - height / 2, y, height / 2, height)
     }
 
     private fun sliderBodyGradientStops(accentColor: Color): Pair<FloatArray, Array<Color>> {
@@ -424,30 +400,15 @@ class OsuProgressbarUI : BasicProgressBarUI() {
         )
     }
 
-    override fun getBoxLength(availableLength: Int, otherDimension: Int): Int {
-        return otherDimension
-    }
-
-    override fun getBox(r: Rectangle): Rectangle = super.getBox(r).scale(2.4f)
+    override fun getBoxLength(availableLength: Int, otherDimension: Int): Int = otherDimension
 
     private fun Float.lerp(other: Float, factor: Float) = this + (other - this) * factor
 
     private fun easeOut(x: Float) = 1 - ((1 - x) * (1 - x))
 
-    private fun Rectangle.scale(scale: Float): Rectangle {
-        val newWidth = width * scale
-        val newHeight = height * scale
-
-        x += ((width - newWidth) / 2).toInt()
-        y += ((height - newHeight) / 2).toInt()
-        width = newWidth.toInt()
-        height = newHeight.toInt()
-
-        return this
-    }
-
     override fun incrementAnimationIndex() {
         super.incrementAnimationIndex()
+        // full repaint required due to transparency being a thing
         progressBar.repaint()
     }
 
