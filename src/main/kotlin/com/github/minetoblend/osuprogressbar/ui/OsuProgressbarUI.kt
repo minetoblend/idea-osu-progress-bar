@@ -192,6 +192,10 @@ class OsuProgressbarUI : BasicProgressBarUI() {
             }
 
             sprite(sliderb[sliderBIndex]) {
+                tint = when {
+                    SkinSource.get { config }.allowSliderBallTint -> settings.comboColor
+                    else -> null
+                }
                 scale = drawScale
                 x = amountFull + height / 2
                 y = centerY
