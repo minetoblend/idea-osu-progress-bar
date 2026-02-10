@@ -1,4 +1,4 @@
-package com.github.minetoblend.ideaosuprogressbar.startup
+package com.github.minetoblend.osuprogressbar.startup
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project

@@ -1,4 +1,4 @@
-package com.github.minetoblend.ideaosuprogressbar.toolWindow
+package com.github.minetoblend.osuprogressbar.toolWindow
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
@@ -8,8 +8,8 @@ import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.content.ContentFactory
-import com.github.minetoblend.ideaosuprogressbar.MyBundle
-import com.github.minetoblend.ideaosuprogressbar.services.MyProjectService
+import com.github.minetoblend.osuprogressbar.MyBundle
+import com.github.minetoblend.osuprogressbar.services.MyProjectService
 import javax.swing.JButton
 
 

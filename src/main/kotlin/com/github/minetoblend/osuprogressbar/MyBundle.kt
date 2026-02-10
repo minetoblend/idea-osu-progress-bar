@@ -1,4 +1,4 @@
-package com.github.minetoblend.ideaosuprogressbar
+package com.github.minetoblend.osuprogressbar
 
 import com.intellij.DynamicBundle
 import org.jetbrains.annotations.NonNls
