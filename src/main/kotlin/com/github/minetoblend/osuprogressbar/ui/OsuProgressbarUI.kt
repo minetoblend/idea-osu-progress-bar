@@ -192,7 +192,6 @@ class OsuProgressbarUI : BasicProgressBarUI() {
             }
 
             sprite(sliderb[sliderBIndex]) {
-                tint = Color(5, 5, 5, 255)
                 scale = drawScale
                 x = amountFull + height / 2
                 y = centerY
