@@ -161,14 +161,6 @@ class OsuProgressbarUI : BasicProgressBarUI() {
             val drawScale = height / 128f
 
             hitCircle(
-                reverseArrow = null,
-                x = height / 2 + amountFull,
-                y = centerY,
-                scale = drawScale,
-                spanProgress = null,
-                arrowDirection = ArrowDirection.Right,
-            )
-            hitCircle(
                 getCircleTexture = { sliderEndCircle },
                 getOverlayTexture = { sliderEndCircleOverlay },
                 reverseArrow = null,
